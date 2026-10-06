@@ -1,0 +1,1 @@
+{ "name": "usage-line", "version": "0.1.0", "description": "statusline-usage.sh 상태 줄을 mod로 다시 그린다", "types": "./types/index.d.ts" }

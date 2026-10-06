@@ -1,0 +1,11 @@
+{
+  "name": "local-mods",
+  "owner": { "name": "jaeseongs95" },
+  "plugins": [
+    {
+      "name": "usage-line",
+      "source": "./usage-line",
+      "description": "statusline-usage.sh 상태 줄을 입력창 위 띠로 그린다"
+    }
+  ]
+}
