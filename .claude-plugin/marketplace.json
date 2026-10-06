@@ -6,6 +6,11 @@
       "name": "usage-line",
       "source": "./usage-line",
       "description": "statusline-usage.sh 상태 줄을 입력창 위 띠로 그린다"
+    },
+    {
+      "name": "korean-ui",
+      "source": "./korean-ui",
+      "description": "Claude Code 화면의 영문을 한국어로 보여 준다"
     }
   ]
 }
