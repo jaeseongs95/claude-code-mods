@@ -80,6 +80,20 @@ git 정보는 `git status --porcelain=v2 --branch` 한 번으로 읽으므로 `g
 
 `/config` 항목 이름은 Claude Code 2.1.291에서 뽑은 영문 label을 키로 씁니다. 버전이 바뀌어 label이 달라지면 그 항목은 영문으로 남으므로 `korean-ui/hooks/dict.ts`에 추가합니다.
 
+### 한국어 팁
+
+스피너 아래 `Tip:` 줄은 플러그인 훅이 닿지 않아, Claude Code의 `spinnerTipsOverride` 설정으로 바꿉니다. `korean-ui/tips.json`에 2.1.291의 기본 팁을 옮긴 48개가 있습니다. 맥 전용, 기업·외부 클라우드 전용, 그때그때 값이 바뀌는 팁은 뺐습니다. `~/.claude/settings.json`에 다음을 넣으면 기본 영어 팁 대신 이 목록이 `팁:` 머리말로 나옵니다.
+
+```json
+"spinnerTipsOverride": {
+  "tipsFile": "~/.claude/mods/korean-ui/tips.json",
+  "excludeDefault": true,
+  "label": "팁"
+}
+```
+
+팁은 파일에서 바로 읽으므로 저장소를 `git pull`하면 갱신됩니다. Claude Code에 새 팁이 생기면 이 파일에 직접 추가해야 합니다(최대 200개, 각 500자).
+
 ## 설치
 
 저장소를 내려받아 로컬 마켓플레이스로 추가한 뒤 플러그인을 설치합니다.
@@ -110,6 +124,7 @@ korean-ui/
   hooks/dict.ts                   /config 항목 이름·명령 설명 사전
   hooks/translate.ts              모델 번역 프롬프트와 응답 해석
   hooks/register.test.ts          테스트
+  tips.json                       spinnerTipsOverride용 한국어 팁 목록
 ```
 
 각 플러그인의 `.claude-plugin/types/`는 Claude Code가 mod를 불러올 때 생성하는 API 타입 선언이라 저장소에 포함하지 않습니다.
