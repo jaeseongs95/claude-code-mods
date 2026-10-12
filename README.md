@@ -1,4 +1,4 @@
-# Claude-Status
+# claude-code-mods
 
 Claude Code mod 플러그인 두 개와, 이를 설치하는 마켓플레이스 `local-mods`를 담은 저장소입니다.
 
@@ -101,7 +101,7 @@ git 정보는 `git status --porcelain=v2 --branch` 한 번으로 읽으므로 `g
 저장소를 내려받아 로컬 마켓플레이스로 추가한 뒤 플러그인을 설치합니다.
 
 ```sh
-git clone https://github.com/jaeseongs95/Claude-Status.git ~/.claude/mods
+git clone https://github.com/jaeseongs95/claude-code-mods.git ~/.claude/mods
 claude plugin marketplace add ~/.claude/mods
 claude plugin install usage-line@local-mods
 claude plugin install korean-ui@local-mods
