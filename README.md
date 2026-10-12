@@ -24,6 +24,7 @@ proj on  main [+1 ?3]  │  Opus 5.5 ⚡high  [status] [context] [diff] [compact
 - 모델 표시 이름(`claude-opus-5-5` → `Opus 5.5`)과 effort. effort는 마지막 모델 요청 값을 쓰고, 아직 요청이 없으면 settings의 `modelSettings[모델 ID].effortLevel`, 그것도 없으면 `effortLevel`을 씁니다.
 - `[status]`, `[context]` 버튼은 `/status`, `/context`를, `[compact]` 버튼은 이어서 작업할 수 있게 요약하라는 지시문을 붙여 `/compact`를 실행합니다. 응답 중에 누르면 응답이 끝난 뒤 실행됩니다.
 - 필요할 때만 보이는 버튼: 스테이징·수정한 파일이 있으면 `[diff]`(`/diff`), `5h`나 `7d` 사용률이 70% 이상이면 `[usage]`(`/usage`)가 `[compact]` 앞에 나타납니다. 미추적 파일만 있을 때는 `[diff]`를 보이지 않습니다.
+- 버튼은 폭이 좁아도 줄어들지 않고, 대신 폴더·모델 쪽 글자가 `…`로 잘립니다. 버튼을 `[ label ]`로 그리면 폴더·모델에 40칸이 남지 않을 만큼 좁을 때는 `[compact]`를 뺀 버튼을 테두리 없는 흐린 라벨로 그립니다. 마우스를 올리거나 포커스가 가면 진하게 보입니다.
 
 **2줄: 얼마나**
 

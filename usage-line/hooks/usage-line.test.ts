@@ -87,18 +87,30 @@ test('띠 버튼을 누르면 해당 명령을 실행한다', async ($, on) => {
   on('command.run', (_, e) => (ran.push(e.args ? `${e.command} ${e.args}` : e.command), { text: '' }))
   await $.session.measure({ context: { window: 1000000 }, rateLimits: [], changed: ['context'] })
 
-  for (const surface of ['terminal', 'desktop'] as const) {
-    const ui = await $.ui.mount({
+  const mount = (surface: 'terminal' | 'desktop', bodyColumns: number) =>
+    $.ui.mount({
       plugin: 'usage-line',
       surface,
       component: 'AbovePrompt',
-      props: { hasSurvey: false, isWorking: false, maxRows: 3, bodyColumns: 120, scroll: { offset: 0, bodyRows: 3 }, view: {} },
+      props: { hasSurvey: false, isWorking: false, maxRows: 3, bodyColumns, scroll: { offset: 0, bodyRows: 3 }, view: {} },
     })
+  for (const surface of ['terminal', 'desktop'] as const) {
+    const ui = await mount(surface, 120)
     for (const key of ['status', 'context', 'diff', 'usage', 'compact']) await ui.press({ key })
     await ui.unmount()
   }
   const once = ['status', 'context', 'diff', 'usage', `compact ${COMPACT_PROMPT}`]
   expect(ran).toEqual([...once, ...once])
+
+  // 넓으면 모두 [ label ], 좁으면 compact 말고는 테두리 없는 흐린 라벨. 버튼 묶음은 줄지 않는다.
+  const plain = async (bodyColumns: number) => {
+    const ui = await mount('terminal', bodyColumns)
+    const r = await Promise.all(['status', 'diff', 'compact'].map(async key => (await ui.find({ type: 'Button', key }))?.props.plain))
+    await ui.unmount()
+    return r
+  }
+  expect(await plain(120)).toEqual([undefined, undefined, undefined])
+  expect(await plain(60)).toEqual([true, true, undefined])
 })
 
 test('요청 전에는 settings 의 모델별 effortLevel 을 보여 준다', async ($, on) => {

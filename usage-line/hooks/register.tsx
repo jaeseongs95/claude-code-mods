@@ -212,6 +212,8 @@ async function refresh($: EngineInterface) {
 }
 
 const REFRESH_MS = 10_000
+// 버튼을 [ label ] 로 그려도 첫 줄 폴더·모델에 남겨 둘 최소 칸 수.
+const MIN_TOP = 40
 // [compact] 버튼이 /compact 뒤에 붙이는 요약 지시.
 export const COMPACT_PROMPT =
   '현재 상황을 유지하고 이어서 작업할 수 있게 요약해 줘. 사용자의 요청 원문과 목표, 확정된 결정과 그 이유, ' +
@@ -249,23 +251,30 @@ export const register: Register = on => {
         ))}
       </Text>
     )
-    // 버튼은 짧은 첫 줄 끝에 둔다: 폭이 좁아도 잘리지 않고, 긴 둘째 줄만 끝이 잘린다.
+    // 버튼은 첫 줄 끝에 줄지 않게(flexShrink 0) 두고, 폭이 모자라면 폴더·모델 쪽이 …로 잘린다.
+    // 버튼까지 같이 줄면 "[ status ]"가 세로로 접힌다. [ label ] 로 그리면 폴더·모델에 MIN_TOP 칸이
+    // 안 남는 좁은 폭에서는 compact 말고는 테두리 없이 흐린 라벨로 그린다(포인터·포커스 아래선 진하게).
     // 응답 중에 누르면 응답이 끝난 뒤 열린다.
     const run = (command: string, args?: string) =>
       $.command.run({ command, args }).catch(err => $.ui.toast(`/${command} 실행 실패: ${err}`))
+    const labels = ['status', 'context', ...buttons]
+    const framed = [...labels, 'compact'].reduce((n, l) => n + l.length + 5, 1)
+    const slim = e.props.bodyColumns - framed < MIN_TOP ? ({ plain: true, dimColor: true } as const) : {}
     return (
       // 위 대화와 붙어 보이지 않게 한 줄 띄운다. 자리가 모자라면 띄우지 않는다.
       <Box flexDirection="column" marginTop={e.props.maxRows > (bottom.length ? 2 : 1) ? 1 : 0}>
         <Box>
-          {draw(top)}
-          <Text> </Text>
-          {['status', 'context', ...buttons].map(c => (
-            <Box key={c} paddingLeft={1}>
-              <Button key={c} label={c} onPress={() => void run(c)} />
-            </Box>
-          ))}
-          <Text> </Text>
-          <Button key="compact" label="compact" onPress={() => void run('compact', COMPACT_PROMPT)} />
+          <Box flexShrink={1} minWidth={0}>{draw(top)}</Box>
+          <Box flexShrink={0}>
+            <Text> </Text>
+            {labels.map(c => (
+              <Box key={c} paddingLeft={1}>
+                <Button key={c} label={c} {...slim} onPress={() => void run(c)} />
+              </Box>
+            ))}
+            <Text> </Text>
+            <Button key="compact" label="compact" onPress={() => void run('compact', COMPACT_PROMPT)} />
+          </Box>
         </Box>
         {bottom.length ? <Box paddingLeft={2}>{draw(bottom)}</Box> : null}
       </Box>
