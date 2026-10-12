@@ -4,7 +4,7 @@ import { COMMAND_DESCRIPTIONS, CONFIG_LABELS } from './dict'
 import { BATCH, needsTranslation, parseArray, SYSTEM, TRANSLATIONS_KEY, trim } from './translate'
 
 // 문자열 전체가 이 문구일 때만 바꾼다(문장 속 같은 단어는 건드리지 않는다).
-// 엔진 문구는 2.1.291 실행 파일에서 확인한 것이다. 끝의 말줄임표(…)는 떼고 찾는다.
+// 엔진 문구는 2.1.291 실행 파일에서 뽑고 2.1.296에서 다시 확인한 것이다. 끝의 말줄임표(…)는 떼고 찾는다.
 const WORDS: Record<string, string> = {
   focus: '집중',
   'memory paused': '메모리 일시 정지',
@@ -266,18 +266,23 @@ export const register: Register = on => {
       : next(e),
   )
 
-  // /config 메뉴는 엔진 화면 그대로 두고 항목 이름만 바꾼다.
+  // /config 메뉴는 엔진 화면 그대로 두고 항목 이름만 바꾼다. 사전에 없는 항목은 모델 번역을 쓴다.
   on('config.describe', async ($, e, next) => {
     const row = await next(e)
-    return { ...row, label: CONFIG_LABELS[row.label] ?? row.label }
+    return { ...row, label: CONFIG_LABELS[row.label] ?? (await loadCache($))[row.label] ?? row.label }
   })
 
-  // 스킬·플러그인 명령 설명은 시작 직후 한 번에 번역해 두고, 끝나면 메뉴가 설명을 다시 묻게 한다.
+  // 사전에 없는 명령 설명(스킬·플러그인, 새 버전의 기본 명령)과 /config 항목 이름은 시작 직후 한 번에
+  // 번역해 두고, 끝나면 메뉴가 다시 묻게 한다. 이미 한국어인 것은 needsTranslation이 거른다.
   on('session.start', async ($, e, next) => {
     const work = async () => {
-      const commands = await $.command.list()
-      await translateMany($, commands.filter(c => !COMMAND_DESCRIPTIONS[c.name]).map(c => c.description))
+      const [commands, rows] = await Promise.all([$.command.list(), $.config.list()])
+      await translateMany($, [
+        ...commands.filter(c => !COMMAND_DESCRIPTIONS[c.name]).map(c => c.description),
+        ...rows.filter(r => !CONFIG_LABELS[r.label]).map(r => r.label),
+      ])
       $.ui.invalidate('command.describe')
+      $.ui.invalidate('config.describe')
     }
     $.clock.after(3000, () => void work().catch(() => {}))
     return next(e)

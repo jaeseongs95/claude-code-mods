@@ -52,6 +52,13 @@ test('/config 항목 이름을 바꾸고 모르는 항목은 그대로 둔다', 
   expect(other.label).toBe('Brand new row')
 })
 
+test('사전에 없는 /config 항목은 모델 번역 결과를 쓴다', async ($, on) => {
+  on('config.describe', ($, e) => ({ label: e.label, isHidden: e.isHidden }))
+  on('store.get', () => ({ value: { 'Brand new row': '새 항목' } }))
+  const row = await $.config.describe({ key: 'x', label: 'Brand new row', isHidden: false, provider: ENGINE })
+  expect(row.label).toBe('새 항목')
+})
+
 test('명령 설명을 바꾼다', async ($, on) => {
   on('command.describe', ($, e) => ({ description: e.description, isHidden: false }))
   const clear = await $.command.describe({

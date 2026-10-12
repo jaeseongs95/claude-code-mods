@@ -46,5 +46,11 @@
   "빠르고 저렴한 코드 리뷰는 /code-review low를 써 보세요. 내장 스킬을 가장 가벼운 수준으로 실행합니다",
   "/goal로 목표를 정하면 Claude가 목표를 이룰 때까지 계속 작업합니다",
   "오래 쓰지 않은 플러그인은 /plugin에서 끄면 컨텍스트를 아끼고 시작이 빨라집니다",
-  "/feedback으로 의견을 보내 주세요"
+  "/feedback으로 의견을 보내 주세요",
+  "Claude 세션을 여러 개 쓰고 있다면 빈 입력창에서 ←를 눌러 한곳에서 모두 보세요",
+  "CLAUDE_CODE_USE_POWERSHELL_TOOL=1을 설정하면 PowerShell 도구를 쓸 수 있습니다(미리보기)",
+  "Slack MCP를 쓰고 있다면 Claude Tag로 Slack에서 바로 @Claude를 부를 수 있습니다 · /install-slack-app",
+  "UI 작업 중이라면 /design으로 만들기 전에 여러 방향의 화면을 먼저 그려 보세요",
+  "Claude API로 AI 제품을 만들어 보세요 · /claude-api",
+  "/team-onboarding을 실행하면 내 Claude 사용 기록으로 팀원용 안내서를 만들어 링크 하나로 공유할 수 있습니다"
 ]
