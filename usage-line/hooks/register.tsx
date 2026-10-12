@@ -4,9 +4,11 @@ import type { EngineInterface, Register } from 'claude-code'
 import type { Cache, Seg } from '../types'
 
 const band = atom({ plugin: 'usage-line', key: 'rows' } as const, [] as Seg[][])
+// 상황에 따라 [status] [context] 와 [compact] 사이에 끼우는 버튼 이름.
+const extra = atom({ plugin: 'usage-line', key: 'buttons' } as const, [] as string[])
 
 // ~/.claude/statusline-usage.sh 의 정보를 두 줄 띠로 그린다. 스크립트에 있던 vim 모드는 mod API로 읽을 수 없어 뺐다.
-//   1줄 "어디서·무엇으로": 폴더 · git · 모델 ⚡effort  (+ [status] [compact] 버튼)
+//   1줄 "어디서·무엇으로": 폴더 · git · 모델 ⚡effort  (+ [status] [context] [diff?] [usage?] [compact] 버튼)
 //   2줄 "얼마나": 컨텍스트 · 캐시 | 비용 | 사용 한도(5h · 7d · 모델별)
 // 색 규칙: 라벨과 부가 정보는 흐리게, 값은 기본 글자색. 한도에 가까워질 때만 노랑·빨강으로 눈에 띄게 한다.
 // 정체성(폴더·브랜치·모델·effort)만 고유 색을 쓴다.
@@ -99,6 +101,11 @@ export function format(d: Line): Seg[][] {
   ]
 }
 
+// 필요할 때만 보이는 버튼: 커밋 안 한 변경이 있으면 [diff], 5h·7d 한도가 노랑(70%) 이상이면 [usage].
+export function extraButtons(d: Line): string[] {
+  const near = Math.max(d.five?.pct ?? 0, d.seven ?? 0) >= 70
+  return [...(d.git && d.git.staged + d.git.modified ? ['diff'] : []), ...(near ? ['usage'] : [])]
+}
 
 // git status --porcelain=v2 --branch 한 번으로 브랜치·스테이징·수정·미추적·ahead/behind를 모두 읽는다.
 export function parseGit(out: string): Git | undefined {
@@ -186,22 +193,22 @@ async function refresh($: EngineInterface) {
   const cacheHit = hitRatio(await read($, cacheAcc), await $.session.id())
   const rate = (k: string) => usage.rateLimits.find(r => r.kind === k)
   const five = rate('five_hour'), seven = rate('seven_day')
-  await update($, band, () =>
-    format({
-      dir: cwd.split(/[\\/]/).filter(Boolean).pop() ?? cwd,
-      git,
-      ctxPct: usage.context.percent,
-      ctxTokens: usage.context.tokens,
-      ctxWindow: usage.context.window,
-      cost: usage.cost?.usd,
-      cacheHit,
-      five: five && { pct: five.percentUsed, reset: hhmm(five.resetsAt) },
-      seven: seven?.percentUsed,
-      scoped,
-      model: modelName(model),
-      effort,
-    }),
-  )
+  const d: Line = {
+    dir: cwd.split(/[\\/]/).filter(Boolean).pop() ?? cwd,
+    git,
+    ctxPct: usage.context.percent,
+    ctxTokens: usage.context.tokens,
+    ctxWindow: usage.context.window,
+    cost: usage.cost?.usd,
+    cacheHit,
+    five: five && { pct: five.percentUsed, reset: hhmm(five.resetsAt) },
+    seven: seven?.percentUsed,
+    scoped,
+    model: modelName(model),
+    effort,
+  }
+  await update($, band, () => format(d))
+  await update($, extra, () => extraButtons(d))
 }
 
 const REFRESH_MS = 10_000
@@ -229,6 +236,7 @@ export const register: Register = on => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const rows = await read($, band)
     if (!rows.length) return next(e)
+    const buttons = await read($, extra)
     // 띠에 두 줄 자리가 없으면 한 줄로 합친다.
     const [top = [], bottom = []] = e.props.maxRows >= 2 ? rows : [join(rows, BAR)]
     const { Box, Button, Text } = $.ui.resolve(e)
@@ -250,8 +258,12 @@ export const register: Register = on => {
       <Box flexDirection="column" marginTop={e.props.maxRows > (bottom.length ? 2 : 1) ? 1 : 0}>
         <Box>
           {draw(top)}
-          <Text>  </Text>
-          <Button key="status" label="status" onPress={() => void run('status')} />
+          <Text> </Text>
+          {['status', 'context', ...buttons].map(c => (
+            <Box key={c} paddingLeft={1}>
+              <Button key={c} label={c} onPress={() => void run(c)} />
+            </Box>
+          ))}
           <Text> </Text>
           <Button key="compact" label="compact" onPress={() => void run('compact', COMPACT_PROMPT)} />
         </Box>

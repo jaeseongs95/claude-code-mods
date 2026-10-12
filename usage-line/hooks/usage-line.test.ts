@@ -1,5 +1,5 @@
 import { expect, mock, test } from 'claude-code/testing'
-import { addUsage, COMPACT_PROMPT, format, hitRatio, humanTokens, modelName, parseGit } from './register'
+import { addUsage, COMPACT_PROMPT, extraButtons, format, hitRatio, humanTokens, modelName, parseGit } from './register'
 
 const plain = (rows: { text: string }[][]) => rows.map(r => r.map(x => x.text).join(''))
 
@@ -62,13 +62,24 @@ test('modelName은 모델 ID를 표시 이름으로 바꾼다', async () => {
   expect(modelName('Opus 5.5')).toBe('Opus 5.5')
 })
 
-test('status·compact 버튼을 누르면 해당 명령을 실행한다', async ($, on) => {
+test('diff 는 커밋 안 한 변경이 있을 때, usage 는 5h·7d 가 70% 이상일 때만 보인다', async () => {
+  const git = (staged: number, modified: number, untracked = 0) => ({ branch: 'main', staged, modified, untracked, ahead: 0, behind: 0 })
+  expect(extraButtons({ dir: 'x', scoped: [] })).toEqual([])
+  expect(extraButtons({ dir: 'x', git: git(0, 0, 3), scoped: [] })).toEqual([])
+  expect(extraButtons({ dir: 'x', git: git(1, 0), scoped: [] })).toEqual(['diff'])
+  expect(extraButtons({ dir: 'x', git: git(0, 2), five: { pct: 69 }, seven: 69, scoped: [] })).toEqual(['diff'])
+  expect(extraButtons({ dir: 'x', five: { pct: 70 }, scoped: [] })).toEqual(['usage'])
+  expect(extraButtons({ dir: 'x', seven: 90, scoped: [] })).toEqual(['usage'])
+})
+
+test('띠 버튼을 누르면 해당 명령을 실행한다', async ($, on) => {
   // 띠를 채우려고 refresh 가 묻는 엔진 호출에 고정값으로 답한다.
   on('session.cwd', () => ({ value: 'D:/proj' }))
   on('session.model', () => ({ value: 'claude-opus-5-5' }))
   on('session.id', () => ({ value: 's1' }))
-  on('session.usage', () => ({ value: { startedAt: 0, context: { window: 1000000, tokens: 1000, percent: 1 }, rateLimits: [] } }))
-  on('process.run', () => ({ value: { exitCode: 1, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  on('session.usage', () => ({ value: { startedAt: 0, context: { window: 1000000, tokens: 1000, percent: 1 }, rateLimits: [{ kind: 'five_hour', percentUsed: 75 }] } }))
+  // 수정한 파일이 있고 5h 가 75% 라서 [diff] [usage] 도 보인다.
+  on('process.run', () => ({ value: { exitCode: 0, stdout: '# branch.head main\n1 .M N... 100644 100644 100644 a b f.ts', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
   on('env.get', () => ({ value: undefined }))
   on('session.measure', (_, e) => ({ changed: e.changed }))
   on('settings.read', () => ({ value: { modelSettings: { 'claude-opus-5-5': { effortLevel: 'high' } } } }))
@@ -83,12 +94,11 @@ test('status·compact 버튼을 누르면 해당 명령을 실행한다', async 
       component: 'AbovePrompt',
       props: { hasSurvey: false, isWorking: false, maxRows: 3, bodyColumns: 120, scroll: { offset: 0, bodyRows: 3 }, view: {} },
     })
-    await ui.press({ key: 'status' })
-    await ui.press({ key: 'compact' })
+    for (const key of ['status', 'context', 'diff', 'usage', 'compact']) await ui.press({ key })
     await ui.unmount()
   }
-  const compact = `compact ${COMPACT_PROMPT}`
-  expect(ran).toEqual(['status', compact, 'status', compact])
+  const once = ['status', 'context', 'diff', 'usage', `compact ${COMPACT_PROMPT}`]
+  expect(ran).toEqual([...once, ...once])
 })
 
 test('요청 전에는 settings 의 모델별 effortLevel 을 보여 준다', async ($, on) => {

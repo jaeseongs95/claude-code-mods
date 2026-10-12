@@ -14,7 +14,7 @@ Claude Code mod 플러그인 두 개와, 이를 설치하는 마켓플레이스 
 ### 화면 구성
 
 ```
-proj on  main [+1 ?3]  │  Opus 5.5 ⚡high  [status] [compact]
+proj on  main [+1 ?3]  │  Opus 5.5 ⚡high  [status] [context] [diff] [compact]
   ctx 42% 84k/200k · cache 87%  │  $1.23  │  5h 30% →14:00 · 7d 12% · Fable 5%
 ```
 
@@ -22,7 +22,8 @@ proj on  main [+1 ?3]  │  Opus 5.5 ⚡high  [status] [compact]
 
 - 폴더 이름과 git 브랜치. 브랜치 뒤 괄호에는 스테이징(`+`), 수정(`!`), 미추적(`?`), ahead(`⇡`), behind(`⇣`) 개수를 0이 아닌 것만 표시합니다. detached 상태면 커밋 해시 앞 7자리를 보여 줍니다.
 - 모델 표시 이름(`claude-opus-5-5` → `Opus 5.5`)과 effort. effort는 마지막 모델 요청 값을 쓰고, 아직 요청이 없으면 settings의 `modelSettings[모델 ID].effortLevel`, 그것도 없으면 `effortLevel`을 씁니다.
-- `[status]` 버튼은 `/status`를, `[compact]` 버튼은 이어서 작업할 수 있게 요약하라는 지시문을 붙여 `/compact`를 실행합니다. 응답 중에 누르면 응답이 끝난 뒤 실행됩니다.
+- `[status]`, `[context]` 버튼은 `/status`, `/context`를, `[compact]` 버튼은 이어서 작업할 수 있게 요약하라는 지시문을 붙여 `/compact`를 실행합니다. 응답 중에 누르면 응답이 끝난 뒤 실행됩니다.
+- 필요할 때만 보이는 버튼: 스테이징·수정한 파일이 있으면 `[diff]`(`/diff`), `5h`나 `7d` 사용률이 70% 이상이면 `[usage]`(`/usage`)가 `[compact]` 앞에 나타납니다. 미추적 파일만 있을 때는 `[diff]`를 보이지 않습니다.
 
 **2줄: 얼마나**
 

@@ -3,6 +3,6 @@ export type Cache = { sessionId: string; read: number; total: number }
 
 declare module 'claude-code' {
   interface PluginState {
-    'usage-line': { rows: Seg[][]; effort: string | null; cache: Cache | null }
+    'usage-line': { rows: Seg[][]; buttons: string[]; effort: string | null; cache: Cache | null }
   }
 }
