@@ -42,11 +42,14 @@ proj on  main [+1 ?3]  │  Opus 5.5 ⚡high  [status] [context] [diff] [compact
 
 띠에 두 줄을 그릴 자리가 없으면 한 줄로 합칩니다.
 
+**숨기기와 다시 보기**: 띠 오른쪽 위 `[-]`를 누르거나 `ctrl+x ctrl+a`로 띠를 접으면 `▸ plugin panel hidden · ctrl+x ctrl+a or click to show` 한 줄이 남습니다. 이 줄을 누르거나 `ctrl+x ctrl+a`를 다시 누르면 펼쳐집니다. 접기와 펼치기는 Claude Code가 맡고, 이 mod는 띠를 항상 그려 두어 펼칠 수단이 사라지지 않게 합니다. 정보를 다시 읽는 동안(`/clear` 직후 등)에는 띠에 `usage-line 읽는 중…`이 잠깐 보입니다.
+
 ### 갱신 시점
 
 - 세션 시작 시, 그리고 그 뒤 10초마다(대기 중이거나 Claude 밖에서 git 상태가 바뀐 경우 반영)
 - 사용량이 다시 측정될 때(`session.measure`)
 - 메인 스레드의 턴이 끝날 때
+- 띠가 비었을 때(`/clear`로 세션 id가 바뀌면 이 mod의 세션 상태가 비므로 바로 다시 읽음)
 
 git 정보는 `git status --porcelain=v2 --branch` 한 번으로 읽으므로 `git`이 PATH에 있어야 합니다. git 저장소가 아닌 폴더에서는 git 구간을 표시하지 않습니다.
 

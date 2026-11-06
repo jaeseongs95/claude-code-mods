@@ -221,27 +221,37 @@ export const COMPACT_PROMPT =
   '사용자가 준 제약과 피드백은 빠짐없이 남기고, 끝난 탐색 과정과 긴 도구 출력은 결론만 남겨.'
 
 export const register: Register = on => {
+  // 앞선 갱신이 안 끝났으면 건너뛰는 갱신. session.start 가 채운다.
+  let kick: (() => void) | undefined
+
   on('session.start', async ($, e, next) => {
     const r = await next(e)
     await refresh($)
-    // 이벤트가 없어도(대기 중, Claude 밖의 git 변경) 10초마다 다시 읽는다. 앞선 갱신이 안 끝났으면 건너뛴다.
-    // 리로드하면 엔진이 이전 타이머를 버리므로 따로 cancel 하지 않는다.
     let busy = false
-    $.clock.every(REFRESH_MS, () => {
+    kick = () => {
       if (busy) return
       busy = true
       refresh($).finally(() => (busy = false))
-    })
+    }
+    // 이벤트가 없어도(대기 중, Claude 밖의 git 변경) 10초마다 다시 읽는다.
+    // 리로드하면 엔진이 이전 타이머를 버리므로 따로 cancel 하지 않는다.
+    $.clock.every(REFRESH_MS, kick)
     return r
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const rows = await read($, band)
-    if (!rows.length) return next(e)
+    const { Box, Button, Text } = $.ui.resolve(e)
+    // /clear 는 세션 id를 바꿔 state 가 비고, 다음 갱신까지 띠가 빈다. 이때 next(e)로 넘기면 엔진이
+    // 띠가 없다고 보고 접힌 띠의 "plugin panel hidden" 줄과 ctrl+x ctrl+a 펼치기를 끈다.
+    // 그래서 빈 동안에도 한 줄을 그리고 바로 다시 읽는다.
+    if (!rows.length) {
+      kick?.()
+      return <Text dimColor>usage-line 읽는 중…</Text>
+    }
     const buttons = await read($, extra)
     // 띠에 두 줄 자리가 없으면 한 줄로 합친다.
     const [top = [], bottom = []] = e.props.maxRows >= 2 ? rows : [join(rows, BAR)]
-    const { Box, Button, Text } = $.ui.resolve(e)
     const draw = (segs: Seg[]) => (
       <Text wrap="truncate-end">
         {segs.map(g => (

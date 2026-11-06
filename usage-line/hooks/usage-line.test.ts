@@ -166,3 +166,32 @@ test('세션이 시작되면 10초마다 다시 읽는다', async ($, on) => {
   await clock.advance(20_000)
   expect(gitRuns).toBe(4)
 })
+
+test('/clear 로 띠가 비어도 한 줄을 그려 엔진의 접기·펼치기를 살려 두고 바로 다시 읽는다', async ($, on) => {
+  mock.clock(on)
+  let gitRuns = 0
+  on('session.cwd', () => ({ value: 'D:/proj' }))
+  on('session.model', () => ({ value: 'claude-opus-5-5' }))
+  on('session.id', () => ({ value: 's1' }))
+  on('session.usage', () => ({ value: { startedAt: 0, context: { window: 1000000 }, rateLimits: [] } }))
+  on('process.run', () => (gitRuns++, { value: { exitCode: 1, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  on('env.get', () => ({ value: undefined }))
+  on('settings.read', () => ({ value: {} }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  let cleared = false
+  on('state.get', { plugin: 'usage-line', key: 'rows' }, (_, e, next) => (cleared ? ((cleared = false), { value: { value: [], version: 1 } }) : next(e)))
+  await $.session.start({ cwd: 'D:/proj', surface: 'terminal', isInteractive: true })
+  expect(gitRuns).toBe(1)
+
+  // /clear 뒤 새 세션의 state 처럼 띠가 비어 있다.
+  cleared = true
+  const ui = await $.ui.mount({
+    plugin: 'usage-line',
+    surface: 'terminal',
+    component: 'AbovePrompt',
+    props: { hasSurvey: false, isWorking: false, maxRows: 3, bodyColumns: 120, scroll: { offset: 0, bodyRows: 3 }, view: {} },
+  })
+  expect(gitRuns).toBe(2)
+  expect((await ui.find({ type: 'Text' }))?.text).toBe('usage-line 읽는 중…')
+  await ui.unmount()
+})
